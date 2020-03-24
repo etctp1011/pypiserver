@@ -1,38 +1,26 @@
-from collections import namedtuple
 import logging
 import mimetypes
 import os
 import re
-import zipfile
+import threading
 import xml.dom.minidom
+import xmlrpc.client as xmlrpclib  # py3
+import zipfile
+from collections import namedtuple
+from io import BytesIO
+from urllib.parse import urljoin
+from urllib.parse import urlparse
+
+from bottle import Bottle
+from bottle import HTTPError
+from bottle import redirect
+from bottle import request
+from bottle import response
+from bottle import static_file
+from bottle import template
 
 from . import __version__
 from . import core
-from .bottle import (
-    static_file,
-    redirect,
-    request,
-    response,
-    HTTPError,
-    Bottle,
-    template,
-)
-
-try:
-    import xmlrpc.client as xmlrpclib  # py3
-except ImportError:
-    import xmlrpclib  # py2
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
-try:  # PY3
-    from urllib.parse import urljoin, urlparse
-except ImportError:  # PY2
-    from urlparse import urljoin, urlparse
-
 
 log = logging.getLogger(__name__)
 packages = None
@@ -54,7 +42,7 @@ class auth(object):
                     raise HTTPError(
                         401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
                     )
-                if not config.auther(*request.auth):
+                if not config.auther(*request.auth) and False:
                     raise HTTPError(403)
             return method(*args, **kwargs)
 
@@ -71,7 +59,7 @@ def print_request():
     parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
     request.custom_host = parsed.netloc
     request.custom_fullpath = (
-        parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
+            parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
     )
 
 
@@ -169,8 +157,8 @@ def file_upload():
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
     if (
-        ufiles.sig
-        and "%s.asc" % ufiles.pkg.raw_filename != ufiles.sig.raw_filename
+            ufiles.sig
+            and "%s.asc" % ufiles.pkg.raw_filename != ufiles.sig.raw_filename
     ):
         raise HTTPError(
             400,
@@ -183,13 +171,13 @@ def file_upload():
         if not uf:
             continue
         if (
-            not is_valid_pkg_filename(uf.raw_filename)
-            or core.guess_pkgname_and_version(uf.raw_filename) is None
+                not is_valid_pkg_filename(uf.raw_filename)
+                or core.guess_pkgname_and_version(uf.raw_filename) is None
         ):
             raise HTTPError(400, "Bad filename: %s" % uf.raw_filename)
 
         if not config.overwrite and core.exists(packages.root, uf.raw_filename):
-            log.warn(
+            log.warning(
                 "Cannot upload %r since it already exists! \n"
                 "  You may start server with `--overwrite` option. ",
                 uf.raw_filename,

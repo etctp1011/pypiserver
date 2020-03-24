@@ -6,7 +6,7 @@ FROM python:3.7.7-alpine3.10 as base
 FROM base AS builder
 RUN apk update
 # Needed to build cffi
-RUN apk add python-dev build-base libffi-dev
+RUN apk add build-base libffi-dev
 COPY . /code
 RUN mkdir /install
 RUN pip install --no-warn-script-location \

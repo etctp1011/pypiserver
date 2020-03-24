@@ -45,6 +45,7 @@ setup(
     package_data={"pypiserver": ["welcome.html"]},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     setup_requires=setup_requires,
+    install_requires=['bottle'],
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
     tests_require=tests_require,
     url="https://github.com/pypiserver/pypiserver",
@@ -83,5 +84,5 @@ setup(
         "console_scripts": ["pypi-server=pypiserver.__main__:main"],
     },
     options={"bdist_wheel": {"universal": True}},
-    platforms=["any"],
+    platforms=["any"]
 )

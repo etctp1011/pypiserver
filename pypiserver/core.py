@@ -10,16 +10,11 @@ import mimetypes
 import os
 import re
 import sys
-
-try:  # PY3
-    from urllib.parse import quote
-except ImportError:  # PY2
-    from urllib import quote
+from urllib.parse import quote
 
 import pkg_resources
 
 from . import Configuration
-
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +27,7 @@ def configure(**kwds):
     log.info("+++Pypiserver invoked with: %s", c)
 
     if c.root is None:
-        c. root = os.path.expanduser("~/packages")
+        c.root = os.path.expanduser("~/packages")
     roots = c.root if isinstance(c.root, (list, tuple)) else [c.root]
     roots = [os.path.abspath(r) for r in roots]
     for r in roots:
@@ -99,7 +94,6 @@ mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 mimetypes.add_type("text/plain", ".asc")
 
-
 # ### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
 #
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.I | re.VERBOSE)
@@ -128,6 +122,8 @@ def parse_version(s):
                 parts.pop()
         parts.append(part)
     return tuple(parts)
+
+
 #
 #### -- End of distribute's code.
 
@@ -199,7 +195,6 @@ def is_allowed_path(path_part):
 
 
 class PkgFile(object):
-
     __slots__ = ['fn', 'root', '_fname_and_hash',
                  'relfn', 'relfn_unix',
                  'pkgname_norm',
@@ -223,7 +218,7 @@ class PkgFile(object):
         return "%s(%s)" % (
             self.__class__.__name__,
             ", ".join(["%s=%r" % (k, getattr(self, k))
-                                  for k in sorted(self.__slots__)]))
+                       for k in sorted(self.__slots__)]))
 
     def fname_and_hash(self, hash_algo):
         if not hasattr(self, '_fname_and_hash'):
@@ -304,7 +299,7 @@ def _digest_file(fpath, hash_algo):
 
     From http://stackoverflow.com/a/21565932/548792
     """
-    blocksize = 2**16
+    blocksize = 2 ** 16
     digester = getattr(hashlib, hash_algo)()
     with open(fpath, 'rb') as f:
         for block in iter(lambda: f.read(blocksize), b''):
@@ -315,9 +310,11 @@ def _digest_file(fpath, hash_algo):
 try:
     from .cache import cache_manager
 
+
     def listdir(root):
         # root must be absolute path
         return cache_manager.listdir(root, _listdir)
+
 
     def digest_file(fpath, hash_algo):
         # fpath must be absolute path

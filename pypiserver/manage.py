@@ -1,59 +1,23 @@
 """Management operations for pypiserver."""
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import itertools
 import os
 import sys
 from distutils.version import LooseVersion
 from subprocess import call
+from xmlrpc.client import Server
 
 import pip
 
 from . import core
 
-if sys.version_info >= (3, 0):
-    from xmlrpc.client import Server
 
-    def make_pypi_client(url):
-        return Server(url)
-else:
-    from xmlrpclib import Transport  # @UnresolvedImport
-    from xmlrpclib import ServerProxy
-    import httplib  # @UnresolvedImport
-    import urllib
-
-    class ProxiedTransport(Transport):
-
-        def set_proxy(self, proxy):
-            self.proxy = proxy
-
-        def make_connection(self, host):
-            self.realhost = host
-            if sys.hexversion < 0x02070000:
-                _http_connection = httplib.HTTP
-            else:
-                _http_connection = httplib.HTTPConnection
-            return _http_connection(self.proxy)
-
-        def send_request(self, connection, handler, request_body):
-            connection.putrequest(
-                "POST", 'http://%s%s' % (self.realhost, handler))
-
-        def send_host(self, connection, host):
-            connection.putheader('Host', self.realhost)
-
-    def make_pypi_client(url):
-        http_proxy_url = urllib.getproxies().get("http", "")
-
-        if http_proxy_url:
-            http_proxy_spec = urllib.splithost(
-                urllib.splittype(http_proxy_url)[1])[0]
-            transport = ProxiedTransport()
-            transport.set_proxy(http_proxy_spec)
-        else:
-            transport = None
-        return ServerProxy(url, transport=transport)
+def make_pypi_client(url):
+    return Server(url)
 
 
 def is_stable_version(pversion):
@@ -108,7 +72,7 @@ def find_updates(pkgset, stable_only=True):
     latest_pkgs = frozenset(filter_latest_pkgs(pkgset))
 
     sys.stdout.write(
-        "checking %s packages for newer version\n" % len(latest_pkgs),)
+        "checking %s packages for newer version\n" % len(latest_pkgs), )
     need_update = set()
 
     pypi = make_pypi_client("https://pypi.org/pypi/")

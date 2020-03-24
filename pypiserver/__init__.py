@@ -39,6 +39,7 @@ def default_config(
         host="0.0.0.0",
         port=8080,
         server=DEFAULT_SERVER,
+        server_opts='',
         redirect_to_fallback=True,
         fallback_url=None,
         authenticated=['update'],

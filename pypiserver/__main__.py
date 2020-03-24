@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import sys
+import shlex
 import textwrap
 
 import functools as ft
@@ -73,9 +74,8 @@ def usage():
       redirect to (default: https://pypi.org/simple/).
 
     --server METHOD
-      Use METHOD to run the server. Valid values include paste,
-      cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
-      default is to use "auto" which chooses one of paste, cherrypy,
+      Use METHOD to run the server. Check http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend 
+      for available values. The default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
 
     -r, --root PACKAGES_DIRECTORY
@@ -172,6 +172,7 @@ def main(argv=None):
             "port=",
             "root=",
             "server=",
+            "server-opts=",
             "fallback-url=",
             "disable-fallback",
             "overwrite",
@@ -219,6 +220,8 @@ def main(argv=None):
             c.fallback_url = v
         elif k == "--server":
             c.server = v
+        elif k == "--server-opts":
+            c.server_opts = v
         elif k == "--welcome":
             c.welcome_file = v
         elif k == "--version":
@@ -285,7 +288,7 @@ def main(argv=None):
         import gevent.monkey  # @UnresolvedImport
         gevent.monkey.patch_all()
 
-    from pypiserver import bottle
+    import bottle
     if c.server not in bottle.server_names:
         sys.exit("unknown server %r. choose one of %s" % (
             c.server, ", ".join(bottle.server_names.keys())))
@@ -294,6 +297,11 @@ def main(argv=None):
     bottle._stderr = ft.partial(pypiserver._logwrite,
             logging.getLogger(bottle.__name__), logging.INFO)
     app = pypiserver.app(**vars(c))
+    if c.server_opts:
+        args = shlex.split(c.server_opts)
+        sys.argv[1:] = args
+    else:
+        sys.argv = sys.argv[:1]
     bottle.run(app=app, host=c.host, port=c.port, server=c.server)
 
 
